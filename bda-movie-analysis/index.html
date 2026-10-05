@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Movie Big Data Analytics Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0e1117;
+      --panel: #151a23;
+      --panel-2: #1b2230;
+      --text: #f4f7fb;
+      --muted: #9ca7b8;
+      --border: rgba(255, 255, 255, 0.09);
+      --accent: #63d6be;
+      --accent-2: #7aa7ff;
+      --accent-3: #ffc857;
+      --accent-4: #ff7a90;
+      --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+      --radius: 8px;
+      --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(99, 214, 190, 0.18), transparent 34rem),
+        radial-gradient(circle at top right, rgba(122, 167, 255, 0.16), transparent 32rem),
+        linear-gradient(135deg, #0b0e14 0%, var(--bg) 52%, #101623 100%);
+      font-family: var(--font);
+      letter-spacing: 0;
+    }
+
+    .page {
+      width: min(1380px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 44px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.55fr);
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+
+    .hero-main,
+    .method-card,
+    .kpi-card,
+    .chart-card,
+    .insight-card {
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.025));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      border-radius: var(--radius);
+    }
+
+    .hero-main {
+      position: relative;
+      overflow: hidden;
+      padding: 32px;
+      min-height: 240px;
+    }
+
+    .hero-main::after {
+      content: "";
+      position: absolute;
+      inset: auto -15% -35% 36%;
+      height: 180px;
+      background: linear-gradient(90deg, transparent, rgba(99, 214, 190, 0.2), rgba(122, 167, 255, 0.26), transparent);
+      transform: rotate(-7deg);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 14px;
+      color: var(--accent);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow span {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 18px var(--accent);
+    }
+
+    h1 {
+      max-width: 780px;
+      margin: 0;
+      font-size: clamp(2rem, 5vw, 4.7rem);
+      line-height: 0.96;
+      letter-spacing: 0;
+    }
+
+    .hero-copy {
+      max-width: 760px;
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 1.02rem;
+      line-height: 1.7;
+    }
+
+    .method-card {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 22px;
+      background: linear-gradient(180deg, rgba(99, 214, 190, 0.11), rgba(122, 167, 255, 0.055));
+    }
+
+    .method-label {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.11em;
+    }
+
+    .method-card strong {
+      display: block;
+      font-size: 1.35rem;
+      line-height: 1.25;
+    }
+
+    .pipeline {
+      display: grid;
+      gap: 9px;
+    }
+
+    .pipeline div {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.055);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .pipeline b {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .kpi-card {
+      padding: 22px;
+      min-height: 136px;
+    }
+
+    .kpi-label {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .kpi-value {
+      margin: 0;
+      font-size: clamp(2rem, 3.3vw, 3.25rem);
+      line-height: 1;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .kpi-note {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .chart-card {
+      min-height: 400px;
+      padding: 22px;
+      background-color: rgba(21, 26, 35, 0.82);
+    }
+
+    .chart-card.wide {
+      grid-column: 1 / -1;
+    }
+
+    .card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 1.1rem;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .tag {
+      flex: 0 0 auto;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(99, 214, 190, 0.12);
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 310px;
+    }
+
+    .chart-card.wide .chart-wrap {
+      height: 360px;
+    }
+
+    .empty-state {
+      display: none;
+      height: 310px;
+      place-items: center;
+      padding: 26px;
+      border: 1px dashed rgba(255, 255, 255, 0.16);
+      border-radius: var(--radius);
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.6;
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    .insights {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .insight-card {
+      padding: 20px;
+      min-height: 156px;
+      background: linear-gradient(180deg, rgba(255, 200, 87, 0.08), rgba(255, 255, 255, 0.025));
+    }
+
+    .insight-number {
+      display: inline-flex;
+      width: 34px;
+      height: 34px;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      border-radius: 50%;
+      color: #111827;
+      background: var(--accent-3);
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .insight-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .insight-card strong {
+      color: var(--text);
+    }
+
+    footer {
+      margin-top: 24px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    @media (max-width: 1120px) {
+      .hero,
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .kpi-grid,
+      .insights {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 680px) {
+      .page {
+        width: min(100% - 22px, 1380px);
+        padding-top: 18px;
+      }
+
+      .hero-main,
+      .method-card,
+      .kpi-card,
+      .chart-card,
+      .insight-card {
+        padding: 18px;
+      }
+
+      .kpi-grid,
+      .insights {
+        grid-template-columns: 1fr;
+      }
+
+      .card-head {
+        display: block;
+      }
+
+      .tag {
+        display: inline-flex;
+        margin-top: 12px;
+      }
+
+      .chart-wrap,
+      .chart-card.wide .chart-wrap,
+      .empty-state {
+        height: 280px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero" aria-labelledby="page-title">
+      <div class="hero-main">
+        <p class="eyebrow"><span></span> MovieLens Big Data Project</p>
+        <h1 id="page-title">Movie Big Data Analytics Dashboard</h1>
+        <p class="hero-copy">
+          PySpark was used for cleaning, aggregation, and large-scale analysis. This single-page dashboard is the visualization layer, designed for static hosting on GitHub Pages.
+        </p>
+      </div>
+      <aside class="method-card" aria-label="Processing method">
+        <div>
+          <p class="method-label">Processing stack</p>
+          <strong>Google Colab + PySpark analysis, exported into one self-contained HTML dashboard.</strong>
+        </div>
+        <div class="pipeline">
+          <div><b>Input</b><span>MovieLens data</span></div>
+          <div><b>Compute</b><span>PySpark</span></div>
+          <div><b>Output</b><span>Static dashboard</span></div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="kpi-grid" aria-label="Key project metrics">
+      <article class="kpi-card">
+        <p class="kpi-label">Movies</p>
+        <p class="kpi-value" data-kpi="movies">27,278</p>
+        <p class="kpi-note">Unique movies represented in the movie metadata.</p>
+      </article>
+      <article class="kpi-card">
+        <p class="kpi-label">Cleaned ratings</p>
+        <p class="kpi-value" data-kpi="ratings">980,769</p>
+        <p class="kpi-note">Ratings retained after the PySpark cleaning step.</p>
+      </article>
+      <article class="kpi-card">
+        <p class="kpi-label">Users</p>
+        <p class="kpi-value" data-kpi="users">6,040</p>
+        <p class="kpi-note">Distinct users in the analyzed ratings data.</p>
+      </article>
+      <article class="kpi-card">
+        <p class="kpi-label">Average rating</p>
+        <p class="kpi-value" data-kpi="avgRating">3.53</p>
+        <p class="kpi-note">Overall average rating across cleaned records.</p>
+      </article>
+    </section>
+
+    <section class="dashboard-grid" aria-label="Movie analytics charts">
+      <article class="chart-card">
+        <div class="card-head">
+          <div>
+            <h2>Top 10 Most Rated Movies</h2>
+            <p class="subtitle">Movies ranked by number of ratings after cleaning.</p>
+          </div>
+          <span class="tag">Engagement</span>
+        </div>
+        <div class="chart-wrap"><canvas id="mostRatedChart"></canvas></div>
+        <div class="empty-state" data-empty-for="mostRatedChart">Place <strong>most_rated.csv</strong> inside the <strong>data</strong> folder next to this HTML file.</div>
+      </article>
+
+      <article class="chart-card">
+        <div class="card-head">
+          <div>
+            <h2>Top 10 Highest Rated Movies</h2>
+            <p class="subtitle">Highest average ratings among the exported top-rated movie results.</p>
+          </div>
+          <span class="tag">Quality</span>
+        </div>
+        <div class="chart-wrap"><canvas id="highestRatedChart"></canvas></div>
+        <div class="empty-state" data-empty-for="highestRatedChart">Place <strong>highest_rated.csv</strong> inside the <strong>data</strong> folder next to this HTML file.</div>
+      </article>
+
+      <article class="chart-card">
+        <div class="card-head">
+          <div>
+            <h2>Genre Performance</h2>
+            <p class="subtitle">Average rating by genre, based on the PySpark genre aggregation.</p>
+          </div>
+          <span class="tag">Genres</span>
+        </div>
+        <div class="chart-wrap"><canvas id="genreChart"></canvas></div>
+        <div class="empty-state" data-empty-for="genreChart">Place <strong>genre_ratings.csv</strong> inside the <strong>data</strong> folder next to this HTML file.</div>
+      </article>
+
+      <article class="chart-card">
+        <div class="card-head">
+          <div>
+            <h2>Rating Distribution</h2>
+            <p class="subtitle">Count of ratings by score.</p>
+          </div>
+          <span class="tag">Distribution</span>
+        </div>
+        <div class="chart-wrap"><canvas id="distributionChart"></canvas></div>
+        <div class="empty-state" data-empty-for="distributionChart">Place <strong>rating_distribution.csv</strong> inside the <strong>data</strong> folder next to this HTML file.</div>
+      </article>
+
+      <article class="chart-card wide">
+        <div class="card-head">
+          <div>
+            <h2>Rating Activity by Year</h2>
+            <p class="subtitle">Yearly volume of rating activity in the cleaned dataset.</p>
+          </div>
+          <span class="tag">Time series</span>
+        </div>
+        <div class="chart-wrap"><canvas id="yearChart"></canvas></div>
+        <div class="empty-state" data-empty-for="yearChart">Place <strong>rating_activity.csv</strong> inside the <strong>data</strong> folder next to this HTML file.</div>
+      </article>
+
+      <article class="chart-card wide">
+        <div class="card-head">
+          <div>
+            <h2>Most Active Users</h2>
+            <p class="subtitle">Users with the highest number of ratings submitted.</p>
+          </div>
+          <span class="tag">User activity</span>
+        </div>
+        <div class="chart-wrap"><canvas id="activeUsersChart"></canvas></div>
+        <div class="empty-state" data-empty-for="activeUsersChart">Place <strong>active_users.csv</strong> inside the <strong>data</strong> folder next to this HTML file.</div>
+      </article>
+    </section>
+
+    <section class="insights" aria-label="Key insights">
+      <article class="insight-card">
+        <span class="insight-number">1</span>
+        <p><strong>Pulp Fiction</strong> was identified as the most rated movie in the preserved project notes.</p>
+      </article>
+      <article class="insight-card">
+        <span class="insight-number">2</span>
+        <p><strong>Film-Noir</strong> had the strongest average genre performance in the preserved analysis summary.</p>
+      </article>
+      <article class="insight-card">
+        <span class="insight-number">3</span>
+        <p><strong>2000</strong> had the highest rating activity in the preserved analysis summary.</p>
+      </article>
+      <article class="insight-card">
+        <span class="insight-number">4</span>
+        <p>The heavy lifting is the <strong>PySpark processing</strong>; this page presents the final results for portfolio review.</p>
+      </article>
+    </section>
+
+    <footer>
+      Built as a static visualization layer for a Movie Big Data Analytics project. Upload the dashboard with a sibling <strong>data</strong> folder containing the exported PySpark CSV files.
+    </footer>
+  </main>
+
+  <script>
+    /*
+      CSV DATA FILES
+      Keep index.html and the data folder together like this:
+
+      index.html
+      data/
+        summary.csv
+        most_rated.csv
+        highest_rated.csv
+        genre_ratings.csv
+        rating_distribution.csv
+        rating_activity.csv
+        active_users.csv
+
+      Change the paths below only if you rename the folder or files.
+    */
+    const csvFiles = {
+      summary: ["data/summary.csv"],
+      mostRatedMovies: ["data/most_rated.csv", "data/most_rated_movies.csv"],
+      highestRatedMovies: ["data/highest_rated.csv", "data/highest_rated_movies.csv"],
+      genrePerformance: ["data/genre_ratings.csv", "data/genre_performance.csv"],
+      ratingDistribution: ["data/rating_distribution.csv"],
+      ratingActivityByYear: ["data/rating_activity.csv", "data/rating_activity_by_year.csv"],
+      mostActiveUsers: ["data/active_users.csv", "data/most_active_users.csv"]
+    };
+
+    const analysisData = {
+      kpis: {
+        movies: 27278,
+        cleanedRatings: 980769,
+        users: 6040,
+        averageRating: 3.53
+      },
+      mostRatedMovies: [],
+      highestRatedMovies: [],
+      genrePerformance: [],
+      ratingDistribution: [],
+      ratingActivityByYear: [],
+      mostActiveUsers: []
+    };
+
+    const palette = {
+      teal: "#63d6be",
+      blue: "#7aa7ff",
+      yellow: "#ffc857",
+      rose: "#ff7a90",
+      purple: "#b891ff",
+      grid: "rgba(255, 255, 255, 0.08)",
+      text: "#f4f7fb",
+      muted: "#9ca7b8"
+    };
+
+    const commonOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false,
+          labels: {
+            color: palette.muted
+          }
+        },
+        tooltip: {
+          backgroundColor: "rgba(14, 17, 23, 0.95)",
+          titleColor: palette.text,
+          bodyColor: palette.text,
+          borderColor: "rgba(255, 255, 255, 0.12)",
+          borderWidth: 1,
+          padding: 12,
+          displayColors: false
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: palette.muted },
+          grid: { color: palette.grid },
+          border: { color: palette.grid }
+        },
+        y: {
+          ticks: { color: palette.muted },
+          grid: { color: palette.grid },
+          border: { color: palette.grid }
+        }
+      }
+    };
+
+    function formatNumber(value) {
+      return new Intl.NumberFormat("en-US").format(value);
+    }
+
+    function setKpis() {
+      document.querySelector('[data-kpi="movies"]').textContent = formatNumber(analysisData.kpis.movies);
+      document.querySelector('[data-kpi="ratings"]').textContent = formatNumber(analysisData.kpis.cleanedRatings);
+      document.querySelector('[data-kpi="users"]').textContent = formatNumber(analysisData.kpis.users);
+      document.querySelector('[data-kpi="avgRating"]').textContent = analysisData.kpis.averageRating.toFixed(2);
+    }
+
+    function parseCsv(text) {
+      const rows = [];
+      let row = [];
+      let value = "";
+      let inQuotes = false;
+
+      for (let i = 0; i < text.length; i += 1) {
+        const char = text[i];
+        const next = text[i + 1];
+
+        if (char === '"' && inQuotes && next === '"') {
+          value += '"';
+          i += 1;
+        } else if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === "," && !inQuotes) {
+          row.push(value.trim());
+          value = "";
+        } else if ((char === "\n" || char === "\r") && !inQuotes) {
+          if (char === "\r" && next === "\n") {
+            i += 1;
+          }
+          row.push(value.trim());
+          if (row.some(cell => cell !== "")) {
+            rows.push(row);
+          }
+          row = [];
+          value = "";
+        } else {
+          value += char;
+        }
+      }
+
+      row.push(value.trim());
+      if (row.some(cell => cell !== "")) {
+        rows.push(row);
+      }
+
+      if (rows.length < 2) {
+        return [];
+      }
+
+      const headers = rows[0].map(header => normalizeKey(header));
+      return rows.slice(1).map(cells => {
+        const item = {};
+        headers.forEach((header, index) => {
+          item[header] = cells[index] ?? "";
+        });
+        return item;
+      });
+    }
+
+    function normalizeKey(key) {
+      return String(key || "")
+        .trim()
+        .replace(/^\uFEFF/, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "");
+    }
+
+    function pick(row, keys, fallback = "") {
+      for (const key of keys) {
+        const normalized = normalizeKey(key);
+        if (row[normalized] !== undefined && row[normalized] !== "") {
+          return row[normalized];
+        }
+      }
+      return fallback;
+    }
+
+    function toNumber(value) {
+      const cleaned = String(value ?? "").replace(/,/g, "");
+      const number = Number(cleaned);
+      return Number.isFinite(number) ? number : 0;
+    }
+
+    async function loadCsvRows(paths) {
+      const candidates = Array.isArray(paths) ? paths : [paths];
+
+      for (const path of candidates) {
+        try {
+          const response = await fetch(path, { cache: "no-store" });
+          if (response.ok) {
+            const rows = parseCsv(await response.text());
+            if (rows.length > 0) {
+              return rows;
+            }
+          }
+        } catch (error) {
+          // Try the next candidate filename.
+        }
+      }
+
+      return [];
+    }
+
+    async function loadExternalData() {
+      const [
+        summary,
+        mostRatedMovies,
+        highestRatedMovies,
+        genrePerformance,
+        ratingDistribution,
+        ratingActivityByYear,
+        mostActiveUsers
+      ] = await Promise.all([
+        loadCsvRows(csvFiles.summary),
+        loadCsvRows(csvFiles.mostRatedMovies),
+        loadCsvRows(csvFiles.highestRatedMovies),
+        loadCsvRows(csvFiles.genrePerformance),
+        loadCsvRows(csvFiles.ratingDistribution),
+        loadCsvRows(csvFiles.ratingActivityByYear),
+        loadCsvRows(csvFiles.mostActiveUsers)
+      ]);
+
+      if (summary.length > 0) {
+        const row = summary[0];
+        analysisData.kpis.movies = toNumber(pick(row, ["movies", "movie_count", "movieCount", "total_movies"], analysisData.kpis.movies));
+        analysisData.kpis.cleanedRatings = toNumber(pick(row, ["cleaned_ratings", "ratings", "rating_count", "ratingCount", "total_ratings"], analysisData.kpis.cleanedRatings));
+        analysisData.kpis.users = toNumber(pick(row, ["users", "user_count", "userCount", "total_users"], analysisData.kpis.users));
+        analysisData.kpis.averageRating = toNumber(pick(row, ["average_rating", "avg_rating", "avgRating"], analysisData.kpis.averageRating));
+      }
+
+      analysisData.mostRatedMovies = mostRatedMovies.map(row => ({
+        title: pick(row, ["title", "movie", "movie_title", "name"]),
+        ratingCount: toNumber(pick(row, ["rating_count", "ratingCount", "count", "ratings", "num_ratings"]))
+      })).filter(row => row.title && row.ratingCount).slice(0, 10);
+
+      analysisData.highestRatedMovies = highestRatedMovies.map(row => ({
+        title: pick(row, ["title", "movie", "movie_title", "name"]),
+        averageRating: toNumber(pick(row, ["average_rating", "avg_rating", "avgRating", "rating"]))
+      })).filter(row => row.title && row.averageRating).slice(0, 10);
+
+      analysisData.genrePerformance = genrePerformance.map(row => ({
+        genre: pick(row, ["genre", "genres", "category"]),
+        averageRating: toNumber(pick(row, ["average_rating", "avg_rating", "avgRating", "rating"]))
+      })).filter(row => row.genre && row.averageRating).slice(0, 15);
+
+      analysisData.ratingDistribution = ratingDistribution.map(row => ({
+        rating: String(pick(row, ["rating", "score", "rating_value", "ratingValue"])),
+        count: toNumber(pick(row, ["count", "rating_count", "ratingCount", "ratings"]))
+      })).filter(row => row.rating && row.count);
+
+      analysisData.ratingActivityByYear = ratingActivityByYear.map(row => ({
+        year: String(pick(row, ["year", "rating_year", "ratingYear"])),
+        ratingCount: toNumber(pick(row, ["rating_count", "ratingCount", "count", "ratings"]))
+      })).filter(row => row.year && row.ratingCount);
+
+      analysisData.mostActiveUsers = mostActiveUsers.map(row => ({
+        userId: String(pick(row, ["userId", "user_id", "userid", "user"])),
+        ratingCount: toNumber(pick(row, ["rating_count", "ratingCount", "count", "ratings"]))
+      })).filter(row => row.userId && row.ratingCount).slice(0, 10);
+    }
+
+    function showEmpty(canvasId) {
+      const canvas = document.getElementById(canvasId);
+      const wrap = canvas.closest(".chart-wrap");
+      const empty = document.querySelector(`[data-empty-for="${canvasId}"]`);
+      wrap.style.display = "none";
+      empty.style.display = "grid";
+    }
+
+    function hasRows(rows) {
+      return Array.isArray(rows) && rows.length > 0;
+    }
+
+    function renderHorizontalBar(canvasId, rows, labelKey, valueKey, color, suffix = "") {
+      if (!hasRows(rows)) {
+        showEmpty(canvasId);
+        return;
+      }
+
+      new Chart(document.getElementById(canvasId), {
+        type: "bar",
+        data: {
+          labels: rows.map(row => row[labelKey]),
+          datasets: [{
+            data: rows.map(row => row[valueKey]),
+            backgroundColor: color,
+            borderRadius: 6,
+            barThickness: 18
+          }]
+        },
+        options: {
+          ...commonOptions,
+          indexAxis: "y",
+          scales: {
+            x: {
+              ticks: {
+                color: palette.muted,
+                callback: value => formatNumber(value) + suffix
+              },
+              grid: { color: palette.grid },
+              border: { color: palette.grid }
+            },
+            y: {
+              ticks: { color: palette.muted },
+              grid: { display: false },
+              border: { color: palette.grid }
+            }
+          }
+        }
+      });
+    }
+
+    function renderVerticalBar(canvasId, rows, labelKey, valueKey, color, suffix = "") {
+      if (!hasRows(rows)) {
+        showEmpty(canvasId);
+        return;
+      }
+
+      new Chart(document.getElementById(canvasId), {
+        type: "bar",
+        data: {
+          labels: rows.map(row => row[labelKey]),
+          datasets: [{
+            data: rows.map(row => row[valueKey]),
+            backgroundColor: color,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          ...commonOptions,
+          scales: {
+            x: {
+              ticks: { color: palette.muted },
+              grid: { display: false },
+              border: { color: palette.grid }
+            },
+            y: {
+              ticks: {
+                color: palette.muted,
+                callback: value => formatNumber(value) + suffix
+              },
+              grid: { color: palette.grid },
+              border: { color: palette.grid }
+            }
+          }
+        }
+      });
+    }
+
+    function renderLine(canvasId, rows, labelKey, valueKey) {
+      if (!hasRows(rows)) {
+        showEmpty(canvasId);
+        return;
+      }
+
+      new Chart(document.getElementById(canvasId), {
+        type: "line",
+        data: {
+          labels: rows.map(row => row[labelKey]),
+          datasets: [{
+            data: rows.map(row => row[valueKey]),
+            borderColor: palette.teal,
+            backgroundColor: "rgba(99, 214, 190, 0.15)",
+            fill: true,
+            tension: 0.32,
+            pointRadius: 3,
+            pointHoverRadius: 6
+          }]
+        },
+        options: commonOptions
+      });
+    }
+
+    function renderDoughnut(canvasId, rows, labelKey, valueKey) {
+      if (!hasRows(rows)) {
+        showEmpty(canvasId);
+        return;
+      }
+
+      new Chart(document.getElementById(canvasId), {
+        type: "doughnut",
+        data: {
+          labels: rows.map(row => row[labelKey]),
+          datasets: [{
+            data: rows.map(row => row[valueKey]),
+            backgroundColor: [palette.teal, palette.blue, palette.yellow, palette.rose, palette.purple, "#8bd17c", "#f59e0b", "#38bdf8", "#f472b6", "#a3e635"],
+            borderColor: "#151a23",
+            borderWidth: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: "58%",
+          plugins: {
+            legend: {
+              position: "right",
+              labels: {
+                color: palette.muted,
+                boxWidth: 12,
+                padding: 14
+              }
+            },
+            tooltip: commonOptions.plugins.tooltip
+          }
+        }
+      });
+    }
+
+    async function initDashboard() {
+      await loadExternalData();
+      setKpis();
+      renderHorizontalBar("mostRatedChart", analysisData.mostRatedMovies, "title", "ratingCount", palette.teal);
+      renderHorizontalBar("highestRatedChart", analysisData.highestRatedMovies, "title", "averageRating", palette.blue);
+      renderHorizontalBar("genreChart", analysisData.genrePerformance, "genre", "averageRating", palette.yellow);
+      renderDoughnut("distributionChart", analysisData.ratingDistribution, "rating", "count");
+      renderLine("yearChart", analysisData.ratingActivityByYear, "year", "ratingCount");
+      renderVerticalBar("activeUsersChart", analysisData.mostActiveUsers, "userId", "ratingCount", palette.rose);
+    }
+
+    initDashboard();
+  </script>
+</body>
+</html>
